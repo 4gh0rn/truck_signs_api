@@ -20,8 +20,10 @@ jobs:
           # Create SSH directory
           mkdir -p ~/.ssh
           
-          # Write the SSH key directly from the secret
-          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_key
+          # Write the SSH key directly from the secret (handle potential formatting issues)
+          cat > ~/.ssh/vm_key << 'ENDKEY'
+${{ secrets.VM_SSH_KEY }}
+ENDKEY
           
           # Set correct permissions (critical for SSH to work)
           chmod 600 ~/.ssh/vm_key
@@ -34,19 +36,28 @@ jobs:
             
             # Detect key type
             FIRST_LINE=$(head -1 ~/.ssh/vm_key)
+            LAST_LINE=$(tail -1 ~/.ssh/vm_key)
+            echo "First line: $FIRST_LINE"
+            echo "Last line: $LAST_LINE"
+            
             if echo "$FIRST_LINE" | grep -q "BEGIN OPENSSH PRIVATE KEY"; then
-              echo "✅ OpenSSH format key detected (likely ed25519 or modern RSA)"
-              # Try to get the key type
-              ssh-keygen -l -f ~/.ssh/vm_key 2>/dev/null && echo "Key fingerprint extracted successfully" || echo "Could not extract fingerprint"
+              echo "✅ OpenSSH format key detected (ed25519 or modern format)"
+              # Get detailed key information
+              ssh-keygen -l -f ~/.ssh/vm_key && echo "✅ Key fingerprint extracted" || echo "❌ Could not get fingerprint"
             elif echo "$FIRST_LINE" | grep -q "BEGIN RSA PRIVATE KEY"; then
               echo "✅ RSA PEM format key detected"
             elif echo "$FIRST_LINE" | grep -q "BEGIN EC PRIVATE KEY"; then
               echo "✅ EC key detected"
             else
-              echo "⚠️ Unknown key format. First line: $FIRST_LINE"
-              echo "Full key content (first 50 chars):"
-              head -c 50 ~/.ssh/vm_key
-              echo ""
+              echo "❌ Invalid key format!"
+              echo "Key might be corrupted or have formatting issues"
+              echo "First 100 chars (hex):"
+              head -c 100 ~/.ssh/vm_key | xxd
+            fi
+            
+            # Check for common formatting issues
+            if ! echo "$LAST_LINE" | grep -q "END.*PRIVATE KEY"; then
+              echo "⚠️ Warning: Key might be truncated (no END marker found)"
             fi
             
             # Test if SSH can parse the key
@@ -78,6 +89,10 @@ jobs:
           # Debug: Show SSH client version
           ssh -V
           
+          # Show connection details (masked)
+          echo "Connecting to: ***@${{ secrets.VM_HOST }} on port ${{ secrets.VM_PORT }}"
+          echo "Using key: ~/.ssh/vm_key"
+          
           # Test the connection with verbose output for debugging
           ssh -i ~/.ssh/vm_key \
               -o StrictHostKeyChecking=no \
@@ -85,6 +100,7 @@ jobs:
               -o ConnectTimeout=10 \
               -o PasswordAuthentication=no \
               -o PubkeyAuthentication=yes \
+              -o PreferredAuthentications=publickey \
               -o IdentitiesOnly=yes \
               -o LogLevel=VERBOSE \
               -p ${{ secrets.VM_PORT }} \
