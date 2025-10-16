@@ -9,20 +9,21 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_key
+          chmod 600 ~/.ssh/vm_key
+          ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+
       - name: Deploy to VM
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USERNAME }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          port: ${{ secrets.VM_PORT }}
-          script: |
+        run: |
+          ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} -p ${{ secrets.VM_PORT }} << 'EOF'
             # Navigate to project directory
             cd /srv/truck-signs-api
 
@@ -30,34 +31,34 @@ jobs:
             git pull origin feature/docker-deployment
 
             # Create .env file from template
-            cat > .env << EOF
+            cat > .env << 'ENVEOF'
             # Django Settings
             DOCKER_SECRET_KEY=${{ secrets.DOCKER_SECRET_KEY }}
-
+            
             # Database Settings
             DOCKER_DB_NAME=${{ secrets.DOCKER_DB_NAME }}
             DOCKER_DB_USER=${{ secrets.DOCKER_DB_USER }}
             DOCKER_DB_PASSWORD=${{ secrets.DOCKER_DB_PASSWORD }}
             DOCKER_DB_HOST=db
             DOCKER_DB_PORT=5432
-
+            
             # Superuser Settings
             SUPERUSER_USERNAME=${{ secrets.SUPERUSER_USERNAME }}
             SUPERUSER_EMAIL=${{ secrets.SUPERUSER_EMAIL }}
             SUPERUSER_PASSWORD=${{ secrets.SUPERUSER_PASSWORD }}
-
+            
             # Stripe Settings
             DOCKER_STRIPE_PUBLISHABLE_KEY=${{ secrets.DOCKER_STRIPE_PUBLISHABLE_KEY }}
             DOCKER_STRIPE_SECRET_KEY=${{ secrets.DOCKER_STRIPE_SECRET_KEY }}
-
+            
             # Email Settings
             DOCKER_EMAIL_HOST_USER=${{ secrets.DOCKER_EMAIL_HOST_USER }}
             DOCKER_EMAIL_HOST_PASSWORD=${{ secrets.DOCKER_EMAIL_HOST_PASSWORD }}
-
+            
             # Production Settings
             PRODUCTION_HOST=${{ secrets.PRODUCTION_HOST }}
             FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-            EOF
+            ENVEOF
 
             # Stop existing containers
             docker-compose down
@@ -67,3 +68,4 @@ jobs:
 
             # Clean up old images
             docker system prune -f
+          EOF
