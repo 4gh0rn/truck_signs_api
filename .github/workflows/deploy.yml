@@ -24,7 +24,7 @@ jobs:
       - name: Deploy to VM
         run: |
           ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no -p ${{ secrets.VM_PORT }} ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} << 'EOF'
-            cd /srv/truck-signs-api
+            cd ~/truck_signs_api
             git pull origin feature/docker-deployment
             
             # Create .env file
