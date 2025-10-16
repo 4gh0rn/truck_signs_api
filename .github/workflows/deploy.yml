@@ -20,10 +20,8 @@ jobs:
           # Create SSH directory
           mkdir -p ~/.ssh
           
-          # Write the SSH key directly from the secret (handle potential formatting issues)
-          cat > ~/.ssh/vm_key << 'ENDKEY'
-${{ secrets.VM_SSH_KEY }}
-ENDKEY
+          # Write the SSH key directly from the secret
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_key
           
           # Set correct permissions (critical for SSH to work)
           chmod 600 ~/.ssh/vm_key
