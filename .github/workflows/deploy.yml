@@ -24,14 +24,10 @@ jobs:
       - name: Deploy to VM
         run: |
           ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no -p ${{ secrets.VM_PORT }} ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} << 'EOF'
-            if [ ! -d ~/truck-signs-api ]; then
-              git clone https://github.com/uwewohlleber/truck_signs_api.git ~/truck-signs-api
-            fi
-            cd ~/truck-signs-api
-            git checkout feature/docker-deployment
+            cd /srv/truck-signs-api
             git pull origin feature/docker-deployment
             
-            cat > .env << 'ENV_END'
+            cat > .env << 'ENDOFENV'
             DOCKER_SECRET_KEY=${{ secrets.DOCKER_SECRET_KEY }}
             DOCKER_DB_NAME=${{ secrets.DOCKER_DB_NAME }}
             DOCKER_DB_USER=${{ secrets.DOCKER_DB_USER }}
@@ -47,7 +43,7 @@ jobs:
             DOCKER_EMAIL_HOST_PASSWORD=${{ secrets.DOCKER_EMAIL_HOST_PASSWORD }}
             PRODUCTION_HOST=${{ secrets.PRODUCTION_HOST }}
             FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-            ENV_END
+            ENDOFENV
             
             docker-compose down || true
             docker-compose up --build -d
