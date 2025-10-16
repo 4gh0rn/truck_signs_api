@@ -46,7 +46,7 @@ jobs:
               "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" \
               > .env
             
-            # Use build.sh script with sudo for docker
+            # Use build.sh script (user must be in docker group)
             chmod +x build.sh
-            sudo ./build.sh
+            ./build.sh
           EOF
