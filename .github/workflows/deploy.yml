@@ -18,16 +18,86 @@ jobs:
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
+          
+          # Decode the base64 SSH key
           echo "${{ secrets.VM_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/vm_key
+          
+          # Ensure proper permissions
           chmod 600 ~/.ssh/vm_key
-          ssh-keyscan ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
-          echo "SSH Key created, length: $(wc -c < ~/.ssh/vm_key)"
-          echo "SSH Key first line: $(head -1 ~/.ssh/vm_key)"
-          echo "SSH Key last line: $(tail -1 ~/.ssh/vm_key)"
+          
+          # Debug: Check key format
+          echo "=== SSH Key Debug Information ==="
+          echo "Key file size: $(wc -c < ~/.ssh/vm_key) bytes"
+          echo "Key file permissions: $(ls -la ~/.ssh/vm_key)"
+          echo "First line: $(head -1 ~/.ssh/vm_key | cut -c1-50)..."
+          echo "Last line: ...$(tail -1 ~/.ssh/vm_key | rev | cut -c1-50 | rev)"
+          
+          # Check if it's an OpenSSH format key
+          if head -1 ~/.ssh/vm_key | grep -q "BEGIN OPENSSH PRIVATE KEY"; then
+            echo "✅ Key is in OpenSSH format"
+          elif head -1 ~/.ssh/vm_key | grep -q "BEGIN RSA PRIVATE KEY"; then
+            echo "⚠️ Key is in RSA format - converting to OpenSSH format"
+            cp ~/.ssh/vm_key ~/.ssh/vm_key.rsa
+            ssh-keygen -p -m PEM -f ~/.ssh/vm_key.rsa -N "" || true
+            mv ~/.ssh/vm_key.rsa ~/.ssh/vm_key
+          elif head -1 ~/.ssh/vm_key | grep -q "BEGIN PRIVATE KEY"; then
+            echo "⚠️ Key is in PKCS8 format - may need conversion"
+          else
+            echo "❌ Unknown key format"
+            echo "First 100 chars: $(head -c 100 ~/.ssh/vm_key)"
+          fi
+          
+          # Validate the SSH key
+          echo "=== Validating SSH Key ==="
+          if ssh-keygen -y -e -f ~/.ssh/vm_key > /dev/null 2>&1; then
+            echo "✅ SSH key is valid"
+            ssh-keygen -l -f ~/.ssh/vm_key || true
+          else
+            echo "❌ SSH key validation failed"
+            echo "Trying alternative validation..."
+            openssl rsa -in ~/.ssh/vm_key -check 2>&1 || true
+          fi
+          
+          # Add host to known_hosts
+          ssh-keyscan -H -p ${{ secrets.VM_PORT }} ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Test SSH Connection
+        run: |
+          echo "=== Testing SSH Connection ==="
+          ssh -i ~/.ssh/vm_key \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              -o ConnectTimeout=10 \
+              -o ServerAliveInterval=60 \
+              -o ServerAliveCountMax=3 \
+              -o PasswordAuthentication=no \
+              -o PubkeyAuthentication=yes \
+              -o IdentitiesOnly=yes \
+              -v \
+              ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} \
+              -p ${{ secrets.VM_PORT }} \
+              "echo '✅ SSH connection successful'" || {
+            echo "❌ SSH connection failed with standard method"
+            echo "Trying with different SSH options..."
+            ssh -i ~/.ssh/vm_key \
+                -o StrictHostKeyChecking=no \
+                -o UserKnownHostsFile=/dev/null \
+                -o PubkeyAcceptedAlgorithms=+ssh-rsa \
+                -o HostKeyAlgorithms=+ssh-rsa \
+                ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} \
+                -p ${{ secrets.VM_PORT }} \
+                "echo '✅ SSH connection successful with compatibility mode'"
+          }
 
       - name: Deploy to VM
         run: |
-          ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} -p ${{ secrets.VM_PORT }} << 'EOF'
+          ssh -i ~/.ssh/vm_key \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              -o ServerAliveInterval=60 \
+              -o ServerAliveCountMax=3 \
+              ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} \
+              -p ${{ secrets.VM_PORT }} << 'EOF'
             # Navigate to project directory
             cd /srv/truck-signs-api
 
