@@ -20,6 +20,9 @@ jobs:
           echo "SSH Key length: ${#VM_SSH_KEY}"
           echo "SSH Key starts with: ${VM_SSH_KEY:0:50}..."
           echo "SSH Key ends with: ...${VM_SSH_KEY: -50}"
+          echo "VM_HOST: ${{ secrets.VM_HOST }}"
+          echo "VM_USERNAME: ${{ secrets.VM_USERNAME }}"
+          echo "VM_PORT: ${{ secrets.VM_PORT }}"
 
       - name: Deploy to VM
         uses: appleboy/ssh-action@v1.0.0
