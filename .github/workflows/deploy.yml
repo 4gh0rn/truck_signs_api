@@ -18,14 +18,16 @@ jobs:
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_key
+          echo "${{ secrets.VM_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/vm_key
           chmod 600 ~/.ssh/vm_key
           ssh-keyscan ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
           echo "SSH Key created, length: $(wc -c < ~/.ssh/vm_key)"
+          echo "SSH Key first line: $(head -1 ~/.ssh/vm_key)"
+          echo "SSH Key last line: $(tail -1 ~/.ssh/vm_key)"
 
       - name: Deploy to VM
         run: |
-          ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} -p ${{ secrets.VM_PORT }} << 'EOF'
+          ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} -p ${{ secrets.VM_PORT }} << 'EOF'
             # Navigate to project directory
             cd /srv/truck-signs-api
 
