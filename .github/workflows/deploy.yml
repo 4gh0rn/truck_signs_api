@@ -24,15 +24,8 @@ jobs:
       - name: Deploy to VM
         run: |
           ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no -p ${{ secrets.VM_PORT }} ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} << 'EOF'
-            # Clone or update repository
-            if [ ! -d ~/truck-signs-api ]; then
-              git clone https://github.com/uwewohlleber/truck_signs_api.git ~/truck-signs-api
-              cd ~/truck-signs-api
-              git checkout feature/docker-deployment
-            else
-              cd ~/truck-signs-api
-              git pull origin feature/docker-deployment
-            fi
+            cd /srv/truck-signs-api
+            git pull origin feature/docker-deployment
             
             # Create .env file
             printf '%s\n' \
