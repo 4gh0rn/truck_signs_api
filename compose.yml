@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:17.1
+    restart: always
+    environment:
+      POSTGRES_DB: ${DOCKER_DB_NAME}
+      POSTGRES_USER: ${DOCKER_DB_USER}
+      POSTGRES_PASSWORD: ${DOCKER_DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DOCKER_SECRET_KEY=${DOCKER_SECRET_KEY}
+      - SUPERUSER_USERNAME=${SUPERUSER_USERNAME}
+      - SUPERUSER_EMAIL=${SUPERUSER_EMAIL}
+      - SUPERUSER_PASSWORD=${SUPERUSER_PASSWORD}
+      - DOCKER_DB_NAME=${DOCKER_DB_NAME}
+      - DOCKER_DB_USER=${DOCKER_DB_USER}
+      - DOCKER_DB_PASSWORD=${DOCKER_DB_PASSWORD}
+      - DOCKER_DB_HOST=${DOCKER_DB_HOST}
+      - DOCKER_DB_PORT=${DOCKER_DB_PORT}
+      - DOCKER_STRIPE_PUBLISHABLE_KEY=${DOCKER_STRIPE_PUBLISHABLE_KEY}
+      - DOCKER_STRIPE_SECRET_KEY=${DOCKER_STRIPE_SECRET_KEY}
+      - DOCKER_EMAIL_HOST_USER=${DOCKER_EMAIL_HOST_USER}
+      - DOCKER_EMAIL_HOST_PASSWORD=${DOCKER_EMAIL_HOST_PASSWORD}
+    depends_on:
+      - db
+    ports:
+      - "8020:8000"
+
+volumes:
+  postgres_data:

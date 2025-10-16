@@ -13,10 +13,18 @@ python manage.py collectstatic --noinput
 python manage.py migrate
 python manage.py makemigrations
 
+# Create superuser if it doesn't exist
+python manage.py shell -c "
+from django.contrib.auth.models import User
+import os
+username = os.environ.get('SUPERUSER_USERNAME')
+email = os.environ.get('SUPERUSER_EMAIL')
+password = os.environ.get('SUPERUSER_PASSWORD')
+if not User.objects.filter(username=username).exists():
+    User.objects.create_superuser(username, email, password)
+    print(f'Superuser {username} created with password {password}')
+else:
+    print(f'Superuser {username} already exists')
+"
+
 gunicorn truck_signs_designs.wsgi:application --bind 0.0.0.0:8000
-
-
-
-echo "Postgresql migrations finished"
-
-python manage.py runserver

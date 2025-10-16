@@ -1,20 +1,27 @@
 import environ
 from .base import *
 
-DEBUG = True
+DEBUG = False
 
 env = environ.Env()
 # reading env file
 environ.Env.read_env()
 
 SECRET_KEY = env("DOCKER_SECRET_KEY")
-DEBUG = True
+
+# Update ALLOWED_HOSTS for production
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    env('PRODUCTION_HOST', default='your-vm-ip'),
+]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:8020",
+    env('FRONTEND_URL', default='http://your-frontend-url'),
 ]
-
-
 
 DATABASES = {
     'default': {
@@ -27,10 +34,8 @@ DATABASES = {
     }
 }
 
-STRIPE_PUBLISHABLE_KEY=env("DOCKER_STRIPE_PUBLISHABLE_KEY")
-STRIPE_SECRET_KEY=env("DOCKER_STRIPE_SECRET_KEY")
-
-
+STRIPE_PUBLISHABLE_KEY = env("DOCKER_STRIPE_PUBLISHABLE_KEY")
+STRIPE_SECRET_KEY = env("DOCKER_STRIPE_SECRET_KEY")
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -50,3 +55,8 @@ MEDIA_ROOT = '/app/media'
 # Whitenoise configuration
 MIDDLEWARE = ['whitenoise.middleware.WhiteNoiseMiddleware'] + MIDDLEWARE
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Security settings for production
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
