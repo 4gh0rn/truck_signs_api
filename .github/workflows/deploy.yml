@@ -15,28 +15,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug SSH Key
+      - name: Setup SSH Key
         run: |
-          echo "SSH Key length: ${#VM_SSH_KEY}"
-          echo "SSH Key starts with: ${VM_SSH_KEY:0:50}..."
-          echo "SSH Key ends with: ...${VM_SSH_KEY: -50}"
-          echo "VM_HOST: ${{ secrets.VM_HOST }}"
-          echo "VM_USERNAME: ${{ secrets.VM_USERNAME }}"
-          echo "VM_PORT: ${{ secrets.VM_PORT }}"
-          echo "SSH Key first line: $(echo '${{ secrets.VM_SSH_KEY }}' | head -1)"
-          echo "SSH Key last line: $(echo '${{ secrets.VM_SSH_KEY }}' | tail -1)"
-          echo "All secrets:"
-          echo "VM_SSH_KEY: '${{ secrets.VM_SSH_KEY }}'"
-          echo "VM_HOST: '${{ secrets.VM_HOST }}'"
-          echo "VM_USERNAME: '${{ secrets.VM_USERNAME }}'"
-          echo "VM_PORT: '${{ secrets.VM_PORT }}'"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_key
+          chmod 600 ~/.ssh/vm_key
+          ssh-keyscan ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+          echo "SSH Key created, length: $(wc -c < ~/.ssh/vm_key)"
 
       - name: Deploy to VM
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USERNAME }}
-          key: ${{ secrets.VM_SSH_KEY }}
+          key_path: ~/.ssh/vm_key
           port: ${{ secrets.VM_PORT }}
           debug: true
           use_insecure_cipher: true
