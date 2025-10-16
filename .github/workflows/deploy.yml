@@ -23,6 +23,13 @@ jobs:
           echo "VM_HOST: ${{ secrets.VM_HOST }}"
           echo "VM_USERNAME: ${{ secrets.VM_USERNAME }}"
           echo "VM_PORT: ${{ secrets.VM_PORT }}"
+          echo "SSH Key first line: $(echo '${{ secrets.VM_SSH_KEY }}' | head -1)"
+          echo "SSH Key last line: $(echo '${{ secrets.VM_SSH_KEY }}' | tail -1)"
+          echo "All secrets:"
+          echo "VM_SSH_KEY: '${{ secrets.VM_SSH_KEY }}'"
+          echo "VM_HOST: '${{ secrets.VM_HOST }}'"
+          echo "VM_USERNAME: '${{ secrets.VM_USERNAME }}'"
+          echo "VM_PORT: '${{ secrets.VM_PORT }}'"
 
       - name: Deploy to VM
         uses: appleboy/ssh-action@v1.0.0
