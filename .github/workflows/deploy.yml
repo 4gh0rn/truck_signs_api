@@ -39,6 +39,7 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           port: ${{ secrets.VM_PORT }}
           debug: true
+          use_insecure_cipher: true
           script: |
             # Navigate to project directory
             cd /srv/truck-signs-api
