@@ -24,19 +24,10 @@ jobs:
       - name: Deploy to VM
         run: |
           ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no -p ${{ secrets.VM_PORT }} ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} << 'EOF'
-            # Check if directory exists, if not clone it
-            if [ ! -d /srv/truck-signs-api ]; then
-              echo "Directory not found. Please run on the server first:"
-              echo "sudo mkdir -p /srv/truck-signs-api"
-              echo "sudo chown -R deploy:deploy /srv/truck-signs-api"
-              echo "cd /srv && git clone https://github.com/uwewohlleber/truck_signs_api.git truck-signs-api"
-              exit 1
-            fi
-            
             cd /srv/truck-signs-api
             git pull origin feature/docker-deployment
             
-            # Create .env file using printf to avoid heredoc issues
+            # Create .env file
             printf '%s\n' \
               "DOCKER_SECRET_KEY=${{ secrets.DOCKER_SECRET_KEY }}" \
               "DOCKER_DB_NAME=${{ secrets.DOCKER_DB_NAME }}" \
@@ -55,7 +46,7 @@ jobs:
               "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" \
               > .env
             
-            docker-compose down || true
-            docker-compose up --build -d
-            docker system prune -f
+            # Use build.sh script
+            chmod +x build.sh
+            ./build.sh
           EOF
