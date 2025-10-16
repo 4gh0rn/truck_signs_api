@@ -17,87 +17,62 @@ jobs:
 
       - name: Setup SSH Key
         run: |
+          # Create SSH directory
           mkdir -p ~/.ssh
           
-          # Decode the base64 SSH key
-          echo "${{ secrets.VM_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/vm_key
+          # Add the target host to known_hosts to avoid host verification issues
+          ssh-keyscan -H -p ${{ secrets.VM_PORT }} ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || echo "Could not add host to known_hosts"
           
-          # Ensure proper permissions
+          # Write the SSH key directly from the secret (assuming it's already properly formatted)
+          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_key
+          
+          # Set correct permissions
           chmod 600 ~/.ssh/vm_key
           
-          # Debug: Check key format
-          echo "=== SSH Key Debug Information ==="
-          echo "Key file size: $(wc -c < ~/.ssh/vm_key) bytes"
-          echo "Key file permissions: $(ls -la ~/.ssh/vm_key)"
-          echo "First line: $(head -1 ~/.ssh/vm_key | cut -c1-50)..."
-          echo "Last line: ...$(tail -1 ~/.ssh/vm_key | rev | cut -c1-50 | rev)"
-          
-          # Check if it's an OpenSSH format key
-          if head -1 ~/.ssh/vm_key | grep -q "BEGIN OPENSSH PRIVATE KEY"; then
-            echo "✅ Key is in OpenSSH format"
-          elif head -1 ~/.ssh/vm_key | grep -q "BEGIN RSA PRIVATE KEY"; then
-            echo "⚠️ Key is in RSA format - converting to OpenSSH format"
-            cp ~/.ssh/vm_key ~/.ssh/vm_key.rsa
-            ssh-keygen -p -m PEM -f ~/.ssh/vm_key.rsa -N "" || true
-            mv ~/.ssh/vm_key.rsa ~/.ssh/vm_key
-          elif head -1 ~/.ssh/vm_key | grep -q "BEGIN PRIVATE KEY"; then
-            echo "⚠️ Key is in PKCS8 format - may need conversion"
+          # Verify the key format
+          echo "=== SSH Key Verification ==="
+          if [ -f ~/.ssh/vm_key ]; then
+            echo "✅ Key file created"
+            echo "Key size: $(wc -c < ~/.ssh/vm_key) bytes"
+            
+            # Check if it looks like a valid key
+            if head -1 ~/.ssh/vm_key | grep -q "BEGIN.*PRIVATE KEY"; then
+              echo "✅ Valid key header detected"
+            else
+              echo "⚠️ Warning: Key might not be in correct format"
+            fi
           else
-            echo "❌ Unknown key format"
-            echo "First 100 chars: $(head -c 100 ~/.ssh/vm_key)"
+            echo "❌ Failed to create key file"
+            exit 1
           fi
           
-          # Validate the SSH key
-          echo "=== Validating SSH Key ==="
-          if ssh-keygen -y -e -f ~/.ssh/vm_key > /dev/null 2>&1; then
-            echo "✅ SSH key is valid"
-            ssh-keygen -l -f ~/.ssh/vm_key || true
-          else
-            echo "❌ SSH key validation failed"
-            echo "Trying alternative validation..."
-            openssl rsa -in ~/.ssh/vm_key -check 2>&1 || true
-          fi
-          
-          # Add host to known_hosts
-          ssh-keyscan -H -p ${{ secrets.VM_PORT }} ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          # Start SSH agent and add the key
+          echo "=== Setting up SSH Agent ==="
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/vm_key 2>&1 || {
+            echo "⚠️ Could not add key to SSH agent, will try direct key file"
+          }
 
       - name: Test SSH Connection
         run: |
           echo "=== Testing SSH Connection ==="
+          
+          # Test the connection using the SSH key directly
           ssh -i ~/.ssh/vm_key \
               -o StrictHostKeyChecking=no \
               -o UserKnownHostsFile=/dev/null \
               -o ConnectTimeout=10 \
-              -o ServerAliveInterval=60 \
-              -o ServerAliveCountMax=3 \
-              -o PasswordAuthentication=no \
-              -o PubkeyAuthentication=yes \
-              -o IdentitiesOnly=yes \
-              -v \
-              ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} \
               -p ${{ secrets.VM_PORT }} \
-              "echo '✅ SSH connection successful'" || {
-            echo "❌ SSH connection failed with standard method"
-            echo "Trying with different SSH options..."
-            ssh -i ~/.ssh/vm_key \
-                -o StrictHostKeyChecking=no \
-                -o UserKnownHostsFile=/dev/null \
-                -o PubkeyAcceptedAlgorithms=+ssh-rsa \
-                -o HostKeyAlgorithms=+ssh-rsa \
-                ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} \
-                -p ${{ secrets.VM_PORT }} \
-                "echo '✅ SSH connection successful with compatibility mode'"
-          }
+              ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} \
+              "echo '✅ SSH connection successful'"
 
       - name: Deploy to VM
         run: |
           ssh -i ~/.ssh/vm_key \
               -o StrictHostKeyChecking=no \
               -o UserKnownHostsFile=/dev/null \
-              -o ServerAliveInterval=60 \
-              -o ServerAliveCountMax=3 \
-              ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} \
-              -p ${{ secrets.VM_PORT }} << 'EOF'
+              -p ${{ secrets.VM_PORT }} \
+              ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} << 'EOF'
             # Navigate to project directory
             cd /srv/truck-signs-api
 
