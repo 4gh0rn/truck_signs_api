@@ -20,51 +20,91 @@ jobs:
           # Create SSH directory
           mkdir -p ~/.ssh
           
-          # Add the target host to known_hosts to avoid host verification issues
-          ssh-keyscan -H -p ${{ secrets.VM_PORT }} ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || echo "Could not add host to known_hosts"
-          
-          # Write the SSH key directly from the secret (assuming it's already properly formatted)
+          # Write the SSH key directly from the secret
           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_key
           
-          # Set correct permissions
+          # Set correct permissions (critical for SSH to work)
           chmod 600 ~/.ssh/vm_key
           
-          # Verify the key format
+          # Verify the key format and type
           echo "=== SSH Key Verification ==="
           if [ -f ~/.ssh/vm_key ]; then
             echo "✅ Key file created"
             echo "Key size: $(wc -c < ~/.ssh/vm_key) bytes"
             
-            # Check if it looks like a valid key
-            if head -1 ~/.ssh/vm_key | grep -q "BEGIN.*PRIVATE KEY"; then
-              echo "✅ Valid key header detected"
+            # Detect key type
+            FIRST_LINE=$(head -1 ~/.ssh/vm_key)
+            if echo "$FIRST_LINE" | grep -q "BEGIN OPENSSH PRIVATE KEY"; then
+              echo "✅ OpenSSH format key detected (likely ed25519 or modern RSA)"
+              # Try to get the key type
+              ssh-keygen -l -f ~/.ssh/vm_key 2>/dev/null && echo "Key fingerprint extracted successfully" || echo "Could not extract fingerprint"
+            elif echo "$FIRST_LINE" | grep -q "BEGIN RSA PRIVATE KEY"; then
+              echo "✅ RSA PEM format key detected"
+            elif echo "$FIRST_LINE" | grep -q "BEGIN EC PRIVATE KEY"; then
+              echo "✅ EC key detected"
             else
-              echo "⚠️ Warning: Key might not be in correct format"
+              echo "⚠️ Unknown key format. First line: $FIRST_LINE"
+              echo "Full key content (first 50 chars):"
+              head -c 50 ~/.ssh/vm_key
+              echo ""
             fi
+            
+            # Test if SSH can parse the key
+            echo "Testing key validity:"
+            ssh-keygen -y -f ~/.ssh/vm_key > /dev/null 2>&1 && echo "✅ SSH can read the key" || echo "❌ SSH cannot read the key"
           else
             echo "❌ Failed to create key file"
             exit 1
           fi
           
+          # Add the target host to known_hosts
+          echo "=== Adding host to known_hosts ==="
+          ssh-keyscan -H -p ${{ secrets.VM_PORT }} ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null && echo "✅ Host added to known_hosts" || echo "⚠️ Could not add host to known_hosts"
+          
           # Start SSH agent and add the key
           echo "=== Setting up SSH Agent ==="
           eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/vm_key 2>&1 || {
-            echo "⚠️ Could not add key to SSH agent, will try direct key file"
-          }
+          if ssh-add ~/.ssh/vm_key 2>&1; then
+            echo "✅ Key added to SSH agent"
+            ssh-add -l
+          else
+            echo "⚠️ Could not add key to SSH agent, will use direct key file"
+          fi
 
       - name: Test SSH Connection
         run: |
           echo "=== Testing SSH Connection ==="
           
-          # Test the connection using the SSH key directly
+          # Debug: Show SSH client version
+          ssh -V
+          
+          # Test the connection with verbose output for debugging
           ssh -i ~/.ssh/vm_key \
               -o StrictHostKeyChecking=no \
               -o UserKnownHostsFile=/dev/null \
               -o ConnectTimeout=10 \
+              -o PasswordAuthentication=no \
+              -o PubkeyAuthentication=yes \
+              -o IdentitiesOnly=yes \
+              -o LogLevel=VERBOSE \
               -p ${{ secrets.VM_PORT }} \
               ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} \
-              "echo '✅ SSH connection successful'"
+              "echo '✅ SSH connection successful'" 2>&1 || {
+            echo "❌ Connection failed. Checking common issues..."
+            echo ""
+            echo "1. Verifying key permissions:"
+            ls -la ~/.ssh/vm_key
+            echo ""
+            echo "2. Testing key readability:"
+            ssh-keygen -y -f ~/.ssh/vm_key > /dev/null 2>&1 && echo "Key is readable" || echo "Key is NOT readable"
+            echo ""
+            echo "3. Checking if public key matches what's on the server:"
+            echo "Public key that should be in authorized_keys on server:"
+            ssh-keygen -y -f ~/.ssh/vm_key 2>/dev/null || echo "Could not extract public key"
+            echo ""
+            echo "Please ensure this public key is in ~/.ssh/authorized_keys on the target server"
+            exit 1
+          }
 
       - name: Deploy to VM
         run: |
