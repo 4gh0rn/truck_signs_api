@@ -24,26 +24,36 @@ jobs:
       - name: Deploy to VM
         run: |
           ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no -p ${{ secrets.VM_PORT }} ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} << 'EOF'
+            # Check if directory exists, if not clone it
+            if [ ! -d /srv/truck-signs-api ]; then
+              echo "Directory not found. Please run on the server first:"
+              echo "sudo mkdir -p /srv/truck-signs-api"
+              echo "sudo chown -R deploy:deploy /srv/truck-signs-api"
+              echo "cd /srv && git clone https://github.com/uwewohlleber/truck_signs_api.git truck-signs-api"
+              exit 1
+            fi
+            
             cd /srv/truck-signs-api
             git pull origin feature/docker-deployment
             
-            cat > .env << 'ENDOFENV'
-            DOCKER_SECRET_KEY=${{ secrets.DOCKER_SECRET_KEY }}
-            DOCKER_DB_NAME=${{ secrets.DOCKER_DB_NAME }}
-            DOCKER_DB_USER=${{ secrets.DOCKER_DB_USER }}
-            DOCKER_DB_PASSWORD=${{ secrets.DOCKER_DB_PASSWORD }}
-            DOCKER_DB_HOST=db
-            DOCKER_DB_PORT=5432
-            SUPERUSER_USERNAME=${{ secrets.SUPERUSER_USERNAME }}
-            SUPERUSER_EMAIL=${{ secrets.SUPERUSER_EMAIL }}
-            SUPERUSER_PASSWORD=${{ secrets.SUPERUSER_PASSWORD }}
-            DOCKER_STRIPE_PUBLISHABLE_KEY=${{ secrets.DOCKER_STRIPE_PUBLISHABLE_KEY }}
-            DOCKER_STRIPE_SECRET_KEY=${{ secrets.DOCKER_STRIPE_SECRET_KEY }}
-            DOCKER_EMAIL_HOST_USER=${{ secrets.DOCKER_EMAIL_HOST_USER }}
-            DOCKER_EMAIL_HOST_PASSWORD=${{ secrets.DOCKER_EMAIL_HOST_PASSWORD }}
-            PRODUCTION_HOST=${{ secrets.PRODUCTION_HOST }}
-            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-            ENDOFENV
+            # Create .env file using printf to avoid heredoc issues
+            printf '%s\n' \
+              "DOCKER_SECRET_KEY=${{ secrets.DOCKER_SECRET_KEY }}" \
+              "DOCKER_DB_NAME=${{ secrets.DOCKER_DB_NAME }}" \
+              "DOCKER_DB_USER=${{ secrets.DOCKER_DB_USER }}" \
+              "DOCKER_DB_PASSWORD=${{ secrets.DOCKER_DB_PASSWORD }}" \
+              "DOCKER_DB_HOST=db" \
+              "DOCKER_DB_PORT=5432" \
+              "SUPERUSER_USERNAME=${{ secrets.SUPERUSER_USERNAME }}" \
+              "SUPERUSER_EMAIL=${{ secrets.SUPERUSER_EMAIL }}" \
+              "SUPERUSER_PASSWORD=${{ secrets.SUPERUSER_PASSWORD }}" \
+              "DOCKER_STRIPE_PUBLISHABLE_KEY=${{ secrets.DOCKER_STRIPE_PUBLISHABLE_KEY }}" \
+              "DOCKER_STRIPE_SECRET_KEY=${{ secrets.DOCKER_STRIPE_SECRET_KEY }}" \
+              "DOCKER_EMAIL_HOST_USER=${{ secrets.DOCKER_EMAIL_HOST_USER }}" \
+              "DOCKER_EMAIL_HOST_PASSWORD=${{ secrets.DOCKER_EMAIL_HOST_PASSWORD }}" \
+              "PRODUCTION_HOST=${{ secrets.PRODUCTION_HOST }}" \
+              "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" \
+              > .env
             
             docker-compose down || true
             docker-compose up --build -d
