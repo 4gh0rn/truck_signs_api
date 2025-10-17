@@ -17,6 +17,7 @@ from rest_framework.generics import *
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
+from django.core.cache import cache
 
 from .models import *
 from .serializers import *
@@ -49,19 +50,33 @@ class CategoryListView(ListAPIView):
     authentication_classes = []
     serializer_class = CategorySerializer
     model = Category
-    queryset = Category.objects.all()
+    
+    def get_queryset(self):
+        cache_key = 'categories_list'
+        queryset = cache.get(cache_key)
+        if queryset is None:
+            queryset = Category.objects.all().select_related()
+            cache.set(cache_key, queryset, 300)  # Cache for 5 minutes
+        return queryset
 
 class LetteringItemCategoryListView(ListAPIView):
     authentication_classes = []
     serializer_class = LetteringItemCategorySerializer
     model = LetteringItemCategory
-    queryset = LetteringItemCategory.objects.all()
+    
+    def get_queryset(self):
+        cache_key = 'lettering_item_categories_list'
+        queryset = cache.get(cache_key)
+        if queryset is None:
+            queryset = LetteringItemCategory.objects.all()
+            cache.set(cache_key, queryset, 300)  # Cache for 5 minutes
+        return queryset
 
 class ProductListView(ListAPIView):
     authentication_classes = []
     serializer_class = ProductSerializer
     model = Product
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().select_related('category')
 
 class ProductFromCategoryListView(ListAPIView):
     authentication_classes = []
@@ -71,21 +86,28 @@ class ProductFromCategoryListView(ListAPIView):
 
     def get_queryset(self):
         category_id = self.kwargs.get(self.lookup_url_kwarg)
-        return Product.objects.filter(category__id=category_id)
+        return Product.objects.filter(category__id=category_id).select_related('category')
 
 
 class ProductColorListView(ListAPIView):
     authentication_classes = []
     serializer_class = ProductColorSerializer
     model = ProductColor
-    queryset = ProductColor.objects.all()
+    
+    def get_queryset(self):
+        cache_key = 'product_colors_list'
+        queryset = cache.get(cache_key)
+        if queryset is None:
+            queryset = ProductColor.objects.all()
+            cache.set(cache_key, queryset, 300)  # Cache for 5 minutes
+        return queryset
 
 
 class LogoListView(ListAPIView):
     authentication_classes = []
     serializer_class = ProductSerializer
     model = Product
-    queryset = Product.objects.filter(category__title='Truck Sign', is_uploaded=False)
+    queryset = Product.objects.filter(category__title='Truck Sign', is_uploaded=False).select_related('category')
 
 
 class ProductDetail(RetrieveAPIView):
@@ -93,7 +115,7 @@ class ProductDetail(RetrieveAPIView):
     serializer_class = ProductSerializer
     model = Product
     lookup_field = 'id'
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().select_related('category')
 
 
 
@@ -264,7 +286,14 @@ class CommentsView(ListAPIView):
     authentication_classes = []
     serializer_class = CommentSerializer
     model = Comment
-    queryset = Comment.objects.all().filter(visible=True)
+    
+    def get_queryset(self):
+        cache_key = 'comments_list'
+        queryset = cache.get(cache_key)
+        if queryset is None:
+            queryset = Comment.objects.filter(visible=True)
+            cache.set(cache_key, queryset, 300)  # Cache for 5 minutes
+        return queryset
 
 
 class CommentCreateView(CreateAPIView):
@@ -279,7 +308,7 @@ class UploadCustomerImage(GenericAPIView):
     def post(self, request, form=None):
         data = request.data
         product_title = "Customer-Image-" + str(datetime.now())
-        category = Category.objects.get(title="Truck Sign")
+        category = Category.objects.select_related().get(title="Truck Sign")
         product = Product(category=category, title=product_title, is_uploaded=True)
         product.save()
 
