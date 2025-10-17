@@ -20,7 +20,10 @@ COPY . .
 # Copy .env file to the location Django expects
 RUN mkdir -p truck_signs_designs/settings && cp .env truck_signs_designs/settings/.env
 
-# Create media directory
-RUN mkdir -p /app/media
+# Create media and static directories
+RUN mkdir -p /app/media /app/static
+
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
 
 ENTRYPOINT ["./entrypoint.sh"]

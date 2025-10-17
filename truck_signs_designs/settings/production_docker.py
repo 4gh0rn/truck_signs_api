@@ -48,13 +48,25 @@ EMAIL_HOST_PASSWORD = env("DOCKER_EMAIL_HOST_PASSWORD")
 STATIC_URL = '/static/'
 STATIC_ROOT = '/app/static'
 
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
 # Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/app/media'
 
 # Whitenoise configuration
-MIDDLEWARE = ['whitenoise.middleware.WhiteNoiseMiddleware'] + MIDDLEWARE
+MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+] + MIDDLEWARE
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Whitenoise settings
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
 
 # Django REST Framework browsable API settings
 REST_FRAMEWORK = {
