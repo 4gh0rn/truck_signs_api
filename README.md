@@ -209,10 +209,28 @@ docker run -d \
 The API provides the following endpoints:
 
 - `GET /admin/` - Django admin interface
-- `GET /api/` - API root (browsable API)
+- `GET /` - API root (browsable API - lists all available endpoints)
+- `GET /truck-signs/` - Alternative API root under truck-signs namespace
 - `GET /health/` - Health check endpoint
 
-Access the browsable API at `http://localhost:8020/api/` when the server is running.
+Access the browsable API at `http://localhost:8020/` or `http://localhost:8020/truck-signs/` when the server is running.
+
+### Available API Endpoints
+
+- `GET /categories/` - List all categories
+- `GET /lettering-item-categories/` - List lettering item categories  
+- `GET /products/` - List all products
+- `GET /product-category/{id}/` - Get products by category
+- `GET /product-variation-retrieve/{id}/` - Get product variation details
+- `GET /product-color/` - List all product colors
+- `GET /product-detail/{id}/` - Get detailed product information
+- `GET /truck-logo-list/` - List truck logos
+- `POST /order/{id}/create/` - Create new order
+- `GET /order/{id}/retrieve/` - Retrieve order details
+- `POST /order-payment/{id}/` - Process order payment
+- `GET /comments/` - List comments
+- `POST /comment/create/` - Create new comment
+- `POST /upload-customer-image/` - Upload customer image
 
 ## Development
 

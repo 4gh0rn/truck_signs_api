@@ -27,6 +27,40 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # Create your views here.
 
+class APIRootView(APIView):
+    """
+    Root API view that provides a browsable API interface
+    """
+    authentication_classes = []
+    
+    def get(self, request):
+        """
+        Return a list of all available API endpoints
+        """
+        endpoints = {
+            'categories': '/categories/',
+            'lettering_item_categories': '/lettering-item-categories/',
+            'products': '/products/',
+            'product_category': '/product-category/{id}/',
+            'product_variation_retrieve': '/product-variation-retrieve/{id}/',
+            'product_color': '/product-color/',
+            'product_detail': '/product-detail/{id}/',
+            'truck_logo_list': '/truck-logo-list/',
+            'create_order': '/order/{id}/create/',
+            'retrieve_order': '/order/{id}/retrieve/',
+            'order_payment': '/order-payment/{id}/',
+            'comments': '/comments/',
+            'comment_create': '/comment/create/',
+            'upload_customer_image': '/upload-customer-image/',
+        }
+        
+        return Response({
+            'message': 'Truck Signs API',
+            'version': '1.0',
+            'endpoints': endpoints,
+            'documentation': 'Visit any endpoint with a browser to see the browsable API interface'
+        })
+
 class CategoryListView(ListAPIView):
     authentication_classes = []
     serializer_class = CategorySerializer
