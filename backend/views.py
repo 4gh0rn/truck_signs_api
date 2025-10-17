@@ -55,7 +55,7 @@ class CategoryListView(ListAPIView):
         cache_key = 'categories_list'
         queryset = cache.get(cache_key)
         if queryset is None:
-            queryset = Category.objects.all().select_related()
+            queryset = Category.objects.all().prefetch_related('product_set')
             cache.set(cache_key, queryset, 300)  # Cache for 5 minutes
         return queryset
 
