@@ -80,7 +80,9 @@ class ProductVariation(models.Model):
         return self.lettering_item_variation_set.all()
 
     def get_total_price(self):
-        items = self.get_all_lettering_items()
+        # Optimize: Use select_related to avoid N+1 queries
+        # Prefetch lettering items to avoid additional queries
+        items = self.lettering_item_variation_set.select_related('lettering_item_category').all()
         price = self.product.category.base_price
         for item in items:
             price += item.lettering_item_category.price
