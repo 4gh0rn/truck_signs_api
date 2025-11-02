@@ -271,6 +271,12 @@ class CommentAdmin(admin.ModelAdmin):
 
 
 
+# Optimize admin site settings
+admin.site.enable_nav_sidebar = False  # Disable sidebar for better performance
+admin.site.site_header = "Truck Signs Admin"
+admin.site.site_title = "Truck Signs"
+admin.site.index_title = "Administration"
+
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(LetteringItemCategory, LetteringItemCategoryAdmin)
 admin.site.register(Product, ProductAdmin)

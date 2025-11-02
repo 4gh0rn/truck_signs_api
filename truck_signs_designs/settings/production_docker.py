@@ -70,8 +70,8 @@ MIDDLEWARE = [
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Whitenoise settings
-WHITENOISE_USE_FINDERS = True
-WHITENOISE_AUTOREFRESH = True
+WHITENOISE_USE_FINDERS = False  # Disable for better performance - use collected static files
+WHITENOISE_AUTOREFRESH = False  # Disable auto-refresh - requires server restart for changes
 
 # Django REST Framework browsable API settings
 REST_FRAMEWORK = {

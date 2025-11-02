@@ -53,6 +53,34 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Disable logging for admin to improve performance (only log in DEBUG mode)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # Only show warnings, not all queries
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+        },
+    },
+}
+
 ROOT_URLCONF = 'truck_signs_designs.urls'
 
 TEMPLATES = [
@@ -165,8 +193,19 @@ CACHES = {
 }
 
 # Admin performance optimizations
-# Disable admin actions logging (can be slow)
 ADMIN_ENABLED = True
+
+# Disable admin's recent actions feature (can be slow)
+# This is handled in admin.py with show_full_result_count = False
+
+# Optimize session storage for admin
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Use database sessions (faster than cache for admin)
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_SAVE_EVERY_REQUEST = False  # Don't save on every request (performance)
+
+# Admin-specific database optimizations
+# These are applied via CONN_MAX_AGE in production/test_docker settings
 
 # STRIPE_PUBLISHABLE_KEY=os.getenv("STRIPE_PUBLISHABLE_KEY")
 # STRIPE_SECRET_KEY=os.getenv("STRIPE_SECRET_KEY")
