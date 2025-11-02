@@ -25,6 +25,11 @@ DATABASES = {
         'PASSWORD': env('DOCKER_DB_PASSWORD'),
         'HOST': env('DOCKER_DB_HOST'),
         'PORT': env('DOCKER_DB_PORT'),
+        'CONN_MAX_AGE': 600,  # Keep connections open for 10 minutes (connection pooling)
+        'OPTIONS': {
+            'connect_timeout': 10,  # 10 second connection timeout
+            'options': '-c statement_timeout=30000'  # 30 second query timeout
+        },
     }
 }
 

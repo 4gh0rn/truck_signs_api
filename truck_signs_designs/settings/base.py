@@ -164,6 +164,10 @@ CACHES = {
     }
 }
 
+# Admin performance optimizations
+# Disable admin actions logging (can be slow)
+ADMIN_ENABLED = True
+
 # STRIPE_PUBLISHABLE_KEY=os.getenv("STRIPE_PUBLISHABLE_KEY")
 # STRIPE_SECRET_KEY=os.getenv("STRIPE_SECRET_KEY")
 

@@ -78,13 +78,8 @@ class CategoryAdmin(admin.ModelAdmin):
         'id',
     ]
     search_fields = ['title', 'id']
-    
     list_per_page = 50  # Limit items per page for better performance
-    
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        # Prefetch products to avoid N+1 queries if needed
-        return qs.prefetch_related('product_set')
+    show_full_result_count = False  # Don't count all items (faster when no data)
 
 
 
