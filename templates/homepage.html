@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block metaAndTitle %}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Truck Signs API - Custom Truck Signs Design</title>
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 100px 0;
+        text-align: center;
+    }
+    .hero-section h1 {
+        font-size: 3.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    .hero-section p {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+    }
+    .features-section {
+        padding: 80px 0;
+    }
+    .feature-card {
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        transition: transform 0.3s;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+    .api-section {
+        background: #f8f9fa;
+        padding: 80px 0;
+    }
+    .endpoint-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        border-left: 4px solid #667eea;
+    }
+    .method-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 0.875rem;
+        margin-right: 0.5rem;
+    }
+    .method-get {
+        background: #28a745;
+        color: white;
+    }
+    .method-post {
+        background: #007bff;
+        color: white;
+    }
+    footer {
+        background: #343a40;
+        color: white;
+        padding: 2rem 0;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block bodyBlock %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <h1>🚛 Truck Signs API</h1>
+        <p>Create and customize professional truck signs with our powerful REST API</p>
+        <a href="/api/" class="btn btn-light btn-lg">Explore API</a>
+        <a href="/admin/" class="btn btn-outline-light btn-lg">Admin Panel</a>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="features-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2>Key Features</h2>
+            <p class="text-muted">Everything you need to build truck sign applications</p>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>📦 Products & Categories</h3>
+                    <p>Manage truck sign products and organize them by categories. Upload custom designs and variations.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>🎨 Custom Colors</h3>
+                    <p>Choose from a wide range of colors for your truck signs. Full hex color code support.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>📝 Lettering Items</h3>
+                    <p>Add custom lettering items like MC numbers, VIN numbers, and other text fields to your signs.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>🛒 Order Management</h3>
+                    <p>Create and manage orders with integrated payment processing via Stripe.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>💬 Customer Reviews</h3>
+                    <p>Display customer comments and reviews. Upload and manage customer images.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <h3>🔐 Secure Admin</h3>
+                    <p>Comprehensive admin panel for managing all aspects of your truck signs business.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Endpoints Section -->
+<div class="api-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2>API Endpoints</h2>
+            <p class="text-muted">Access our RESTful API for seamless integration</p>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="endpoint-card">
+                    <span class="method-badge method-get">GET</span>
+                    <strong>/api/categories/</strong>
+                    <p class="mb-0 text-muted">List all categories</p>
+                </div>
+                <div class="endpoint-card">
+                    <span class="method-badge method-get">GET</span>
+                    <strong>/api/products/</strong>
+                    <p class="mb-0 text-muted">List all products</p>
+                </div>
+                <div class="endpoint-card">
+                    <span class="method-badge method-get">GET</span>
+                    <strong>/api/truck-logo-list/</strong>
+                    <p class="mb-0 text-muted">List truck logos</p>
+                </div>
+                <div class="endpoint-card">
+                    <span class="method-badge method-get">GET</span>
+                    <strong>/api/product-color/</strong>
+                    <p class="mb-0 text-muted">List product colors</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="endpoint-card">
+                    <span class="method-badge method-post">POST</span>
+                    <strong>/api/order/{id}/create/</strong>
+                    <p class="mb-0 text-muted">Create a new order</p>
+                </div>
+                <div class="endpoint-card">
+                    <span class="method-badge method-post">POST</span>
+                    <strong>/api/comment/create/</strong>
+                    <p class="mb-0 text-muted">Create a comment</p>
+                </div>
+                <div class="endpoint-card">
+                    <span class="method-badge method-post">POST</span>
+                    <strong>/api/upload-customer-image/</strong>
+                    <p class="mb-0 text-muted">Upload customer image</p>
+                </div>
+                <div class="endpoint-card">
+                    <span class="method-badge method-post">POST</span>
+                    <strong>/api/order-payment/{id}/</strong>
+                    <p class="mb-0 text-muted">Process payment for order</p>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/api/" class="btn btn-primary btn-lg">View Full API Documentation</a>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <p class="mb-0">&copy; 2025 Truck Signs API. All rights reserved.</p>
+        <p class="mb-0 mt-2">
+            <a href="/api/" class="text-light">API Documentation</a> | 
+            <a href="/admin/" class="text-light">Admin Panel</a>
+        </p>
+    </div>
+</footer>
+{% endblock %}
+

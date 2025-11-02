@@ -30,6 +30,12 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # Create your views here.
 
+def homepage(request):
+    """
+    Landing page view for the website
+    """
+    return render(request, 'homepage.html')
+
 @api_view(['GET'])
 def api_root(request):
     """
