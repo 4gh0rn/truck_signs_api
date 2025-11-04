@@ -10,8 +10,8 @@ done
 echo "PostgreSQL is active"
 
 python manage.py collectstatic --noinput --clear
-python manage.py migrate
 python manage.py makemigrations
+python manage.py migrate
 
 # Create superuser if it doesn't exist
 python manage.py shell -c "

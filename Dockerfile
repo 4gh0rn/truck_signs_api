@@ -16,8 +16,6 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p truck_signs_designs/settings && cp .env truck_signs_designs/settings/.env
-
 RUN mkdir -p /app/media /app/static
 
 RUN chmod +x entrypoint.sh

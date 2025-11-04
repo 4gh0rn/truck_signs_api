@@ -10,12 +10,7 @@ environ.Env.read_env()
 SECRET_KEY = env("DOCKER_SECRET_KEY")
 DEBUG = True
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://159.69.209.108",
-]
-
-
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
 
 DATABASES = {
     'default': {

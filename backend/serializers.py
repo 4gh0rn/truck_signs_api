@@ -9,8 +9,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def get_sample_product_id(self, obj):
         # Verwende prefetch_related um N+1 Queries zu vermeiden
-        if hasattr(obj, '_prefetched_objects_cache') and 'products' in obj._prefetched_objects_cache:
-            products = obj._prefetched_objects_cache['products']
+        if hasattr(obj, '_prefetched_objects_cache') and 'product_set' in obj._prefetched_objects_cache:
+            products = obj._prefetched_objects_cache['product_set']
             if products:
                 return products[0].id
         return None

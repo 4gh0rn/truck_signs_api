@@ -10,18 +10,9 @@ environ.Env.read_env()
 SECRET_KEY = env("DOCKER_SECRET_KEY")
 
 # Update ALLOWED_HOSTS for production
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '0.0.0.0',
-    env('PRODUCTION_HOST', default='your-vm-ip'),
-]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:8020",
-    env('FRONTEND_URL', default='http://your-frontend-url'),
-]
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
 
 DATABASES = {
     'default': {

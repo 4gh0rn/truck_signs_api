@@ -108,7 +108,7 @@ Configure the application using these environment variables:
 | `DOCKER_STRIPE_SECRET_KEY` | Stripe secret key | - | No |
 | `DOCKER_EMAIL_HOST_USER` | SMTP username | - | No |
 | `DOCKER_EMAIL_HOST_PASSWORD` | SMTP password | - | No |
-| `PRODUCTION_HOST` | Production domain | `localhost` | No |
+| `ALLOWED_HOSTS` | Production Hosts | `localhost` | No |
 | `FRONTEND_URL` | Frontend URL | `http://localhost:3000` | No |
 
 ### Building the Container Image
