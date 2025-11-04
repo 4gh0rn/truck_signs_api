@@ -10,7 +10,10 @@ environ.Env.read_env()
 SECRET_KEY = env("DOCKER_SECRET_KEY")
 DEBUG = True
 
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
+# Use django-environ's list() method with default fallback
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+# Filter out empty strings to avoid validation errors
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS if origin.strip()]
 
 DATABASES = {
     'default': {

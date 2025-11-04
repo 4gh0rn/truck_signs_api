@@ -10,9 +10,15 @@ environ.Env.read_env()
 SECRET_KEY = env("DOCKER_SECRET_KEY")
 
 # Update ALLOWED_HOSTS for production
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
+# Use django-environ's list() method with default fallback
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+# Filter out empty strings just in case
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
+# CORS_ALLOWED_ORIGINS can be empty (no CORS allowed) or contain valid origins
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+# Filter out empty strings to avoid validation errors
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS if origin.strip()]
 
 DATABASES = {
     'default': {
