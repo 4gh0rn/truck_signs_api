@@ -10,8 +10,9 @@ done
 echo "PostgreSQL is active"
 
 python manage.py collectstatic --noinput --clear
-python manage.py makemigrations
-python manage.py migrate
+# Do NOT generate migrations in production/runtime
+# Apply existing migrations non-interactively
+python manage.py migrate --noinput
 
 # Create superuser if it doesn't exist
 python manage.py shell -c "
