@@ -15,8 +15,8 @@ else
 fi
 
 # Stop and remove both containers explicitly to avoid docker-compose v1 'ContainerConfig' bug
-docker-compose stop
-docker-compose rm -f
+# Use 'down' which is more robust - stops and removes containers, networks, and volumes
+docker-compose down --remove-orphans
 
 # Start both containers fresh
 docker-compose up -d
