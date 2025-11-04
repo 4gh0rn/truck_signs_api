@@ -4,8 +4,11 @@ from .base import *
 DEBUG = False
 
 env = environ.Env()
-# reading env file
-environ.Env.read_env()
+# reading env file - suppress warning if .env doesn't exist (vars come from Docker Compose)
+# Check if .env file exists in project root before reading
+env_file = os.path.join(ROOT_BASE_DIR, '.env')
+if os.path.exists(env_file):
+    environ.Env.read_env(env_file)
 
 SECRET_KEY = env("DOCKER_SECRET_KEY")
 
