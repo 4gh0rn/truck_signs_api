@@ -14,9 +14,9 @@ else
     docker-compose build
 fi
 
-# Stop and remove only the app container (keep db running)
-docker-compose stop app
-docker-compose rm -f app
+# Stop and remove both containers explicitly to avoid docker-compose v1 'ContainerConfig' bug
+docker-compose stop
+docker-compose rm -f
 
-# Start containers with force recreate to ensure fresh start
-docker-compose up -d --force-recreate
+# Start both containers fresh
+docker-compose up -d
