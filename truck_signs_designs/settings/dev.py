@@ -10,13 +10,7 @@ environ.Env.read_env()
 SECRET_KEY= env("SECRET_KEY")
 DEBUG = True
 
-CORS_ALLOWED_ORIGINS = [
-    "https://www.signsfortrucks.com",
-    "https://signsfortrucks.com",
-    "http://localhost:3000",
-]
-
-
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
 
 DATABASES = {
     'default': {

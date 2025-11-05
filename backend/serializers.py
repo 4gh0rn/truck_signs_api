@@ -8,8 +8,12 @@ class CategorySerializer(serializers.ModelSerializer):
     sample_product_id = serializers.SerializerMethodField('get_sample_product_id')
 
     def get_sample_product_id(self, obj):
-        product = Product.objects.filter(category=obj).first()
-        return product.id
+        # Verwende prefetch_related um N+1 Queries zu vermeiden
+        if hasattr(obj, '_prefetched_objects_cache') and 'product_set' in obj._prefetched_objects_cache:
+            products = obj._prefetched_objects_cache['product_set']
+            if products:
+                return products[0].id
+        return None
 
     class Meta:
         model = Category

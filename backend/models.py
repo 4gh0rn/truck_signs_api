@@ -19,6 +19,9 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = 'categories'
+        indexes = [
+            models.Index(fields=['title']),  # Für Logo-Liste: category__title='Truck Sign'
+        ]
 
     def __str__(self):
         return self.title
@@ -51,6 +54,12 @@ class Product(models.Model):
     detail_image = models.ImageField(upload_to='uploads/products_detail', blank=True)
     is_uploaded = models.BooleanField(default=False)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['category', 'is_uploaded']),  # Für Logo-Liste: category__title='Truck Sign', is_uploaded=False
+            models.Index(fields=['category']),  # Für ProductFromCategoryListView: category__id=category_id
+        ]
+
     def __str__(self):
         return self.title + " - " + self.category.title
 
@@ -62,11 +71,18 @@ class ProductVariation(models.Model):
     product_color = models.ForeignKey(ProductColor, on_delete=models.SET_NULL, null=True, blank=True)
     amount = models.IntegerField(default=1)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['product']),  # Für Order.product Abfragen
+        ]
+
     def get_all_lettering_items(self):
         return self.lettering_item_variation_set.all()
 
     def get_total_price(self):
-        items = self.get_all_lettering_items()
+        # Optimize: Use select_related to avoid N+1 queries
+        # Prefetch lettering items to avoid additional queries
+        items = self.lettering_item_variation_set.select_related('lettering_item_category').all()
         price = self.product.category.base_price
         for item in items:
             price += item.lettering_item_category.price
@@ -83,6 +99,11 @@ class LetteringItemVariation(models.Model):
     lettering_item_category = models.ForeignKey(LetteringItemCategory, on_delete=models.SET_NULL, null=True, blank=True)
     lettering = models.CharField(max_length=256)
     product_variation = models.ForeignKey(ProductVariation, on_delete=models.SET_NULL, null=True, blank=True,related_name="lettering_item_variation_set")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['product_variation']),  # Für get_all_lettering_items()
+        ]
 
     def __str__(self):
         try:
@@ -115,6 +136,12 @@ class Order(models.Model):
     comment = models.TextField(blank=True)
     payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, null=True, blank=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['user_email']),  # Für Order-Abfragen nach Email
+            models.Index(fields=['ordered_date']),  # Für chronologische Sortierung
+        ]
+
     def __str__(self):
         return self.user_email + '-' + self.ordered_date.strftime("%b. %-d, %Y, %-I:%M %p")
 
@@ -127,6 +154,11 @@ class Comment(models.Model):
     image = models.ImageField(upload_to='uploads/comments/')
     text = models.TextField(blank=True)
     visible = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['visible']),  # Für CommentsView: nur sichtbare Kommentare
+        ]
 
     def __str__(self):
         return self.user_email

@@ -15,11 +15,7 @@ SECRET_KEY= os.environ["SECRET_KEY"]
 
 DEBUG = True
 
-CORS_ALLOWED_ORIGINS = [
-    "https://truck-signs-frontend-nextjs-4f1tbf3c3-ceci-aguilera.vercel.app",
-    "https://truck-signs-frontend-nextjs.vercel.app",
-    "https://truck-signs-frontend-nextjs-git-vercelpre-ceci-aguilera.vercel.app",
-]
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(',')
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ['CLOUD_NAME'],

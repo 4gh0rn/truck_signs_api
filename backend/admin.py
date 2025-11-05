@@ -13,6 +13,30 @@ class OrderAdmin(admin.ModelAdmin):
         'get_product_category',
         'ordered_date',
     ]
+    
+    list_select_related = (
+        'product',
+        'product__product',
+        'product__product__category',
+        'product__product_color',
+        'payment'
+    )
+    
+    list_prefetch_related = (
+        'product__lettering_item_variation_set__lettering_item_category',
+    )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related(
+            'product',
+            'product__product',
+            'product__product__category',
+            'product__product_color',
+            'payment'
+        ).prefetch_related(
+            'product__lettering_item_variation_set__lettering_item_category'
+        )
 
     def get_product_variation_id(self, obj):
         try:
@@ -36,7 +60,7 @@ class OrderAdmin(admin.ModelAdmin):
         except:
             return 'No category'
     get_product_category.short_description = 'Product Category'
-    get_product_category.admin_order_field = 'product__product__categotry'
+    get_product_category.admin_order_field = 'product__product__category'
 
     search_fields = ['user_email', 'id']
 
@@ -54,6 +78,8 @@ class CategoryAdmin(admin.ModelAdmin):
         'id',
     ]
     search_fields = ['title', 'id']
+    list_per_page = 50  # Limit items per page for better performance
+    show_full_result_count = False  # Don't count all items (faster when no data)
 
 
 
@@ -66,6 +92,7 @@ class LetteringItemCategoryAdmin(admin.ModelAdmin):
         'id',
     ]
     search_fields = ['title', 'id']
+    list_per_page = 50  # Limit items per page for better performance
 
 
 
@@ -78,7 +105,8 @@ class ProductColorAdmin(admin.ModelAdmin):
         'color_in_hex',
         'id',
     ]
-    search_fields = ['color_nickname',  'color_in_hex', 'id']
+    search_fields = ['color_nickname', 'color_in_hex', 'id']
+    list_per_page = 50  # Limit items per page for better performance
 
 
 
@@ -91,7 +119,15 @@ class ProductAdmin(admin.ModelAdmin):
         'is_uploaded',
         'id',
     ]
-    search_fields = ['title',  'category', 'id']
+    search_fields = ['title', 'id']
+    list_filter = ['category', 'is_uploaded']
+    list_select_related = ('category',)
+    
+    list_per_page = 50  # Limit items per page for better performance
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('category')
 
 
 
@@ -105,6 +141,28 @@ class ProductVariationAdmin(admin.ModelAdmin):
         'get_amount',
         'id',
     ]
+    
+    list_select_related = (
+        'product',
+        'product__category',
+        'product_color'
+    )
+    
+    list_prefetch_related = (
+        'lettering_item_variation_set__lettering_item_category',
+    )
+    
+    list_per_page = 50  # Limit items per page for better performance
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related(
+            'product',
+            'product__category',
+            'product_color'
+        ).prefetch_related(
+            'lettering_item_variation_set__lettering_item_category'
+        )
 
     def get_amount(self, obj):
         try:
@@ -118,13 +176,14 @@ class ProductVariationAdmin(admin.ModelAdmin):
 
     def get_amount_of_lettering(self, obj):
         try:
-            return len(obj.get_all_lettering_items())
+            # Use cached prefetch instead of calling get_all_lettering_items()
+            return obj.lettering_item_variation_set.count()
         except:
             return '0'
     get_amount_of_lettering.short_description = 'Amount of Lettering'
-    get_amount_of_lettering.admin_order_field = 'len(obj.get_all_lettering_items())'
+    get_amount_of_lettering.admin_order_field = 'lettering_item_variation_set__count'
 
-    search_fields = ['product',  'product_color', 'id']
+    search_fields = ['id']
 
 
 
@@ -136,14 +195,31 @@ class LetteringItemVariationAdmin(admin.ModelAdmin):
         'get_product_variation',
         'id',
     ]
+    
+    list_select_related = (
+        'lettering_item_category',
+        'product_variation',
+        'product_variation__product',
+        'product_variation__product__category'
+    )
+    
+    list_per_page = 50  # Limit items per page for better performance
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related(
+            'lettering_item_category',
+            'product_variation',
+            'product_variation__product',
+            'product_variation__product__category'
+        )
 
     def get_lettering_item_category(self, obj):
         try:
             return obj.lettering_item_category
         except:
             return "---"
-
-        get_amount_of_lettering.short_description = 'Category'
+    get_lettering_item_category.short_description = 'Category'
 
 
     def get_product_variation(self, obj):
@@ -151,11 +227,9 @@ class LetteringItemVariationAdmin(admin.ModelAdmin):
             return obj.product_variation
         except:
             return "---"
+    get_product_variation.short_description = 'Product Variation'
 
-        get_product_variation.short_description = 'Product Variation'
-
-
-        search_fields = ['lettering_item_category', 'lettering', 'id']
+    search_fields = ['lettering', 'id']
 
 
 
@@ -188,12 +262,20 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = [
         'user_email',
         'text',
+        'visible',
         'id',
     ]
-
+    list_filter = ['visible']
     search_fields = ['user_email', 'id']
+    list_per_page = 50  # Limit items per page for better performance
 
 
+
+# Optimize admin site settings
+admin.site.enable_nav_sidebar = False  # Disable sidebar for better performance
+admin.site.site_header = "Truck Signs Admin"
+admin.site.site_title = "Truck Signs"
+admin.site.index_title = "Administration"
 
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(LetteringItemCategory, LetteringItemCategoryAdmin)

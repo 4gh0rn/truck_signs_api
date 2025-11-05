@@ -6,6 +6,7 @@ from .views import *
 app_name = 'trucks_signs_app'
 
 urlpatterns = [
+    url(r'^$', api_root, name='api-root'),
     url(r'^categories/$', CategoryListView.as_view(), name='categories-api'),
     url(r'^lettering-item-categories/$', LetteringItemCategoryListView.as_view(), name='lettering-item-categories-api'),
     url(r'^products/$', ProductListView.as_view(), name='products-api'),
